@@ -3,14 +3,11 @@ import { db } from './index';
 export interface Email {
   id: string;
   source: string;
+  subject: string;
+  description: string;
   external_thread_id: string;
   date: string;
-  properties: Record<string, Record<string, string>>;
   provider_id: string;
-  external_message_id: string;
-  is_priority: boolean;
-  draft_body: string;
-  attachments: string[];
   body_html: string;
   status: 'pending' | 'processed' | 'failed';
 }

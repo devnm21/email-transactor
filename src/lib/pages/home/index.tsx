@@ -15,6 +15,7 @@ import { ProcessButton } from './components/process-button';
 import { Email, EmailService } from '../../db/email';
 import { TransactionService } from '../../db/transaction';
 import ProgressBar from '../../../components/ui/progress';
+import { transformRawEmailObject } from '../../db/utils';
 
 interface EmailData {
   id: string;
@@ -149,10 +150,7 @@ export const Home = () => {
       await dbCleanUp();
 
       const emails = await EmailService.bulkAdd(
-        emailData.map((email) => ({
-          ...email,
-          status: 'pending',
-        }))
+        emailData.map((email) => transformRawEmailObject(email))
       );
       setEmails(emails);
 
