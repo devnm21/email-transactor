@@ -14,16 +14,19 @@ export type TransactionLabel =
   | 'other';
 
 export interface Transaction {
+  id?: string;
   receiptId?: string;
-  name: string;
-  description: string;
-  company: string;
-  amount: number;
-  date: Date;
+  name?: string;
+  description?: string;
+  company?: string;
+  amount?: number;
+  date?: Date;
   status: TransactionStatus;
-  type: TransactionType;
-  labels: TransactionLabel[];
+  type?: TransactionType;
+  labels?: TransactionLabel[];
   emailId: string; // Reference to the associated email
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 interface TransactionCardProps {
@@ -42,10 +45,10 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const textColor = useColorModeValue('gray.600', 'gray.300');
+  const incomeColor = useColorModeValue('green.500', 'green.300');
+  const expenseColor = useColorModeValue('red.500', 'red.300');
   const amountColor =
-    transaction.type === 'income'
-      ? useColorModeValue('green.500', 'green.300')
-      : useColorModeValue('red.500', 'red.300');
+    transaction.type === 'income' ? incomeColor : expenseColor;
 
   return (
     <Box

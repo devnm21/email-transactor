@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Box, Text, VStack, Progress } from '@chakra-ui/react';
 import {
   Stat,
@@ -12,6 +12,9 @@ import { Fade } from '@chakra-ui/transition';
 import { TransactionList } from './components/transaction-list';
 import { Transaction } from './components/transaction';
 import { ProcessButton } from './components/process-button';
+import { Email, EmailService } from '../../db/email';
+import { TransactionService } from '../../db/transaction';
+import ProgressBar from '../../../components/ui/progress';
 
 interface EmailData {
   id: string;
@@ -24,26 +27,28 @@ interface ProcessingMetrics {
   totalEmails: number;
   processedEmails: number;
   foundTransactions: number;
-  progress: number;
 }
 
 // API call to process a single email
-const processEmail = async (email: EmailData): Promise<Transaction | null> => {
+const processEmail = async (
+  transaction: Transaction,
+  email: Email
+): Promise<Transaction | null> => {
   try {
     const response = await fetch('/api/process-emails', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ transaction, email }),
     });
 
     if (!response.ok) {
       throw new Error('Failed to process email');
     }
 
-    const { transaction } = await response.json();
-    return transaction;
+    const { transaction: processedTransaction } = await response.json();
+    return processedTransaction;
   } catch (error) {
     console.error('Error processing email:', email.id, error);
     return null;
@@ -58,53 +63,109 @@ export const Home = () => {
     totalEmails: 0,
     processedEmails: 0,
     foundTransactions: 0,
-    progress: 0,
   });
 
-  const processEmails = async () => {
+  useEffect(() => {
+    const fetchEmails = async () => {
+      const emails = await EmailService.getAll();
+      setEmails(emails);
+    };
+    const fetchTransactions = async () => {
+      const transactions = await TransactionService.getAll();
+      setTransactions(transactions);
+    };
+
+    fetchTransactions();
+    fetchEmails();
+  }, []);
+
+  console.log('transactions --->', transactions);
+
+  const processEmails = async (emailData: Email[]) => {
+    for (const email of emailData.slice(0, 2)) {
+      console.log(email);
+      const transaction = await TransactionService.add({
+        id: crypto.randomUUID(),
+        status: 'pending',
+        createdAt: new Date(),
+        emailId: email.id,
+        date: new Date(email.date),
+      });
+      setTransactions((prev) => [transaction, ...prev]);
+
+      const processedTransaction = await processEmail(transaction, email);
+      if (processedTransaction) {
+        await TransactionService.update(processedTransaction);
+        setTransactions((prev) =>
+          prev.map((t) =>
+            t.id === processedTransaction.id ? processedTransaction : t
+          )
+        );
+      } else {
+        // delete the transaction
+        await TransactionService.delete(transaction.id || '');
+        setTransactions((prev) => prev.filter((t) => t.id !== transaction.id));
+      }
+
+      console.log(processedTransaction);
+      if (processedTransaction) {
+        await EmailService.update(email.id, {
+          status: 'processed',
+        });
+        await TransactionService.update(processedTransaction);
+        setMetrics((current) => ({
+          ...current,
+          processedEmails: current.processedEmails + 1,
+          foundTransactions: current.foundTransactions + 1,
+        }));
+      } else {
+        setMetrics((current) => ({
+          ...current,
+          processedEmails: current.processedEmails + 1,
+        }));
+      }
+    }
+  };
+
+  const loadEmails = async () => {
+    const response = await fetch('/worktrial.json');
+    if (!response.ok) throw new Error('Failed to fetch email data');
+    const emailData: Email[] = await response.json();
+    return emailData;
+  };
+
+  const dbCleanUp = async () => {
+    await EmailService.deleteAll();
+    await TransactionService.deleteAll();
+  };
+
+  const queueEmails = async () => {
     try {
       setIsProcessing(true);
       setTransactions([]);
 
       // Fetch email data
-      const response = await fetch('/worktrial.json');
-      if (!response.ok) throw new Error('Failed to fetch email data');
+      const emailData = await loadEmails();
+      await dbCleanUp();
 
-      const emailData: EmailData[] = await response.json();
-      setEmails(emailData);
+      const emails = await EmailService.bulkAdd(
+        emailData.map((email) => ({
+          ...email,
+          status: 'pending',
+        }))
+      );
+      setEmails(emails);
 
       // Initialize metrics
       setMetrics({
         totalEmails: emailData.length,
         processedEmails: 0,
         foundTransactions: 0,
-        progress: 0,
       });
 
       // Process emails one by one
-      const processedTransactions: Transaction[] = [];
-
-      for (const email of emailData.slice(1, 2)) {
-        console.log(email);
-        const transaction = await processEmail(email);
-        console.log(transaction);
-        if (transaction) {
-          processedTransactions.push(transaction);
-          setMetrics((current) => ({
-            ...current,
-            processedEmails: current.processedEmails + 1,
-            foundTransactions: current.foundTransactions + 1,
-          }));
-        } else {
-          setMetrics((current) => ({
-            ...current,
-            processedEmails: current.processedEmails + 1,
-          }));
-        }
-      }
-
-      // Update final state
-      setTransactions(processedTransactions);
+      // const processedTransactions: Transaction[] = [];
+      await processEmails(emails.slice(0, 2));
     } catch (error) {
       console.error('Error processing emails:', error);
       throw error;
@@ -113,13 +174,27 @@ export const Home = () => {
     }
   };
 
+  const sortedTransactions =
+    transactions?.sort(
+      (a, b) =>
+        new Date(a.createdAt || new Date()).getTime() -
+        new Date(b.createdAt || new Date()).getTime()
+    ) || [];
+
+  console.log('metrics --->', metrics);
+
   return (
     <VStack gap={8} w="full" py={8}>
       <Box w="full" maxW="container.md">
         <VStack gap={6} align="stretch">
-          <ProcessButton onProcess={processEmails} w="full">
+          <ProcessButton onProcess={queueEmails} w="full">
             Start Processing
           </ProcessButton>
+          {isProcessing && (
+            <ProgressBar
+              value={(metrics.processedEmails / metrics.totalEmails) * 100 || 0}
+            />
+          )}
 
           {isProcessing && (
             <Box>
@@ -130,8 +205,10 @@ export const Home = () => {
                 </Stat>
 
                 <Stat>
-                  <StatLabel>Processed</StatLabel>
-                  <StatValueText>{metrics.processedEmails}</StatValueText>
+                  <StatLabel>Processing</StatLabel>
+                  <StatValueText>
+                    {metrics.processedEmails + 1}/{metrics.totalEmails}
+                  </StatValueText>
                 </Stat>
 
                 <Stat>
@@ -144,9 +221,9 @@ export const Home = () => {
         </VStack>
       </Box>
 
-      {!isProcessing && transactions.length > 0 && (
+      {sortedTransactions.length > 0 && (
         <Fade in>
-          <TransactionList transactions={transactions} />
+          <TransactionList transactions={sortedTransactions} />
         </Fade>
       )}
     </VStack>
