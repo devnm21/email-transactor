@@ -1,7 +1,7 @@
 import { Box, Badge, Text, Flex, Stack, Icon } from '@chakra-ui/react';
 import { FiArrowUpRight, FiArrowDownLeft } from 'react-icons/fi';
 import { format } from 'date-fns';
-import { useColorModeValue } from './color-mode';
+import { useColorModeValue } from '../../../../components/ui/color-mode';
 
 export type TransactionStatus = 'pending' | 'complete' | 'failed';
 export type TransactionType = 'income' | 'expense';
