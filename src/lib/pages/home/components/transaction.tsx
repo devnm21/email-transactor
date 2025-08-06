@@ -14,6 +14,7 @@ export type TransactionLabel =
   | 'other';
 
 export interface Transaction {
+  receiptId?: string;
   name: string;
   description: string;
   company: string;
