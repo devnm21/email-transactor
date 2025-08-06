@@ -12,7 +12,8 @@ Return the extracted information as a single JSON object.
 **HTML Email Content:**
 [HTML]
 **Desired JSON Output Format:**
-[{
+{
+"transaction": {
   "receiptId": "string", // Any reference to the receipt, like a receipt number, invoice number, that can distinguish it from other transactions.
   "name": "string",
   "description": "string",
@@ -23,7 +24,10 @@ Return the extracted information as a single JSON object.
   "status": "string",
   "type": "string",
   "labels": ["string"]
-}]
+  }
+}
+
+If the email is found to be a non transaction email - such as a newsletter, a marketing email, a support email, etc. - return "null" for "transaction".
 
 RETURN WITHOUT ANY OTHER TEXT OR COMMENTS. OR MARKDOWN. JUST THE JSON.
 IF THERE ARE NO TRANSACTIONS, RETURN AN EMPTY ARRAY.
@@ -33,7 +37,7 @@ IF THERE ARE NO TRANSACTIONS, RETURN AN EMPTY ARRAY.
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 export async function POST(request: NextRequest) {
   try {
-    const { email } = await request.json();
+    const { transaction: _transaction, email } = await request.json();
     if (email.body_html) {
       fs.writeFileSync(`./${email.id}.html`, email.body_html);
     }
@@ -47,12 +51,6 @@ export async function POST(request: NextRequest) {
         {
           role: 'user',
           parts: [
-            // {
-            //   fileData: {
-            //     mimeType: 'text/html',
-            //     fileUri: uploadResponse.uri,
-            //   },
-            // },
             {
               text: prompt.replace('[HTML]', email.body_html),
             },
@@ -60,14 +58,17 @@ export async function POST(request: NextRequest) {
         },
       ],
     });
-    const json = JSON.parse(response.text || '{}');
+    const json = JSON.parse(
+      response.text?.replace(/```[^\n]*\n|\n```/g, '') || '{}'
+    );
     console.log(json);
-    if (json.length === 0) {
+    if (!json || json?.transaction === null || json?.transaction === 'null') {
       return NextResponse.json({ transaction: null });
     }
-    const transactionResponse = json[0];
+    const transactionResponse = json.transaction;
     // Create transaction object (basic example)
     const transaction: Transaction = {
+      id: _transaction.id,
       receiptId: email.id,
       name:
         email.properties?.['ff7a032a-38cf-4776-804b-342f6c2803ab']?.value ||
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest) {
         'Unknown Company',
       amount: transactionResponse.amount || 0,
       date: new Date(email.date),
-      status: 'pending',
+      status: 'complete',
       type: transactionResponse.type || 'expense',
       labels: transactionResponse.labels || ['other'],
       emailId: email.id,
