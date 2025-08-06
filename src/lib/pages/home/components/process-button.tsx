@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, ButtonProps, useToastStyles } from '@chakra-ui/react';
-import { toaster } from '../../../../components/ui/toaster';
+import { Button, ButtonProps } from '@chakra-ui/react';
 
 interface ProcessButtonProps extends Omit<ButtonProps, 'onClick'> {
   onProcess: () => Promise<void>;
@@ -14,7 +13,6 @@ export const ProcessButton: React.FC<ProcessButtonProps> = ({
   ...props
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
-  const toast = toaster;
 
   const handleClick = async () => {
     try {
