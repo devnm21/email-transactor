@@ -32,10 +32,10 @@ export class EmailService {
     }
   }
 
-  static async bulkAdd(emails: Email[]): Promise<string[]> {
+  static async bulkAdd(emails: Email[]): Promise<Email[]> {
     try {
-      const ids = await db.emails.bulkAdd(emails);
-      console.log('Added emails:', ids);
+      await db.emails.bulkAdd(emails);
+      console.log('Added emails:', emails.length);
       return emails;
     } catch (error) {
       console.error('Error adding emails:', error);

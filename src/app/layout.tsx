@@ -3,8 +3,6 @@ import { Figtree as FontBody } from 'next/font/google';
 
 import { Provider } from '@/components/ui/provider';
 import { Layout } from '@/lib/layout';
-import { Toaster } from '@chakra-ui/react';
-import { toaster } from '../components/ui/toaster';
 
 const fontBody = FontBody({
   subsets: ['latin'],
@@ -56,7 +54,6 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       <body>
         <Provider>
           <Layout>{children}</Layout>
-          <Toaster toaster={toaster} />
         </Provider>
       </body>
     </html>

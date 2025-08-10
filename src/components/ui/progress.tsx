@@ -1,4 +1,4 @@
-import { For, Progress as ProgressChakra, Stack } from '@chakra-ui/react';
+import { Progress as ProgressChakra, Stack } from '@chakra-ui/react';
 
 export const ProgressBar = ({ value }: { value: number }) => {
   return (

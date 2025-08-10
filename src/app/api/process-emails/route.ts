@@ -70,15 +70,9 @@ export async function POST(request: NextRequest) {
     const transaction: Transaction = {
       id: _transaction.id,
       receiptId: email.id,
-      name:
-        email.properties?.['ff7a032a-38cf-4776-804b-342f6c2803ab']?.value ||
-        'Unknown Transaction',
-      description:
-        email.properties?.['e86975bf-f22f-4197-a1e3-828616b4692b']?.value || '',
-      company:
-        transactionResponse.company ||
-        email.properties?.['ff7a032a-38cf-4776-804b-342f6c2803ab']?.value ||
-        'Unknown Company',
+      name: transactionResponse.name || email.subject || '',
+      description: transactionResponse.description || email.description || '',
+      company: transactionResponse.company || email.description || '',
       amount: transactionResponse.amount || 0,
       date: new Date(email.date),
       status: 'complete',

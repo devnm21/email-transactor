@@ -13,7 +13,7 @@ import {
 import { FiArrowUpRight, FiArrowDownLeft } from 'react-icons/fi';
 import { format } from 'date-fns';
 import { useColorModeValue } from '../../../../components/ui/color-mode';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { EmailService } from '../../../db/email';
 
 export type TransactionStatus = 'pending' | 'complete' | 'failed';

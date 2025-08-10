@@ -1,12 +1,4 @@
-import {
-  Box,
-  SimpleGrid,
-  Container,
-  Skeleton,
-  HStack,
-  SkeletonCircle,
-  Stack,
-} from '@chakra-ui/react';
+import { Box, SimpleGrid, Container, Skeleton, HStack } from '@chakra-ui/react';
 import { Transaction, TransactionCard } from './transaction';
 
 interface TransactionListProps {
