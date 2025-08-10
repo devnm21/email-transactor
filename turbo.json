@@ -3,7 +3,7 @@
   "tasks": {
     "build": {
       "outputs": [".next/**", "!.next/cache/**", "public/**"],
-      "env": []
+      "env": ["GEMINI_API_KEY"]
     },
     "lint": {
       "outputs": [],
