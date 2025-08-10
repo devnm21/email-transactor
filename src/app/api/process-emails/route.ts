@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { NextRequest, NextResponse } from 'next/server';
 import { Transaction } from '../../../lib/pages/home/components/transaction';
 import { GoogleGenAI } from '@google/genai';
@@ -38,13 +37,7 @@ const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 export async function POST(request: NextRequest) {
   try {
     const { transaction: _transaction, email } = await request.json();
-    if (email.body_html) {
-      fs.writeFileSync(`./${email.id}.html`, email.body_html);
-    }
-    // const uploadResponse = await ai.files.upload({
-    //   file: new Blob([email.body_html], { type: 'text/html' }),
-    // });
-    // console.log(uploadResponse);
+
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: [
