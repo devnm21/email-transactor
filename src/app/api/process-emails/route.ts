@@ -54,12 +54,10 @@ export async function POST(request: NextRequest) {
     const json = JSON.parse(
       response.text?.replace(/```[^\n]*\n|\n```/g, '') || '{}'
     );
-    console.log(json);
     if (!json || json?.transaction === null || json?.transaction === 'null') {
       return NextResponse.json({ transaction: null });
     }
     const transactionResponse = json.transaction;
-    // Create transaction object (basic example)
     const transaction: Transaction = {
       id: _transaction.id,
       receiptId: email.id,
@@ -73,9 +71,6 @@ export async function POST(request: NextRequest) {
       labels: transactionResponse.labels || ['other'],
       emailId: email.id,
     };
-
-    // Log the transaction
-    console.log('Processed transaction:', transaction);
 
     return NextResponse.json({ transaction });
   } catch (error) {
