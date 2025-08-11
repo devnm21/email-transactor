@@ -118,11 +118,10 @@ export const Home = () => {
         await TransactionService.delete(transaction.id || '');
         setTransactions((prev) => prev.filter((t) => t.id !== transaction.id));
       }
-
+      await EmailService.update(email.id, {
+        status: 'processed',
+      });
       if (processedTransaction) {
-        await EmailService.update(email.id, {
-          status: 'processed',
-        });
         await TransactionService.update(processedTransaction);
         setMetrics((current) => ({
           ...current,
@@ -163,7 +162,7 @@ export const Home = () => {
       const emails = await EmailService.bulkAdd(
         emailData.map((email) => transformRawEmailObject(email))
       );
-      setEmails(emails); // Set emails state for the queueEmails function
+      setEmails(emails);
 
       // Initialize metrics
       setMetrics({
@@ -232,7 +231,10 @@ export const Home = () => {
 
       {sortedTransactions.length > 0 && (
         <Fade in>
-          <TransactionList transactions={sortedTransactions} />
+          <TransactionList
+            isProcessing={isProcessing}
+            transactions={sortedTransactions}
+          />
         </Fade>
       )}
     </VStack>

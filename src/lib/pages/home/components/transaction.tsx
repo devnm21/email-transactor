@@ -108,7 +108,7 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
         }}
         onClick={handleTransactionClick}
       >
-        <Flex justify="space-between" align="start" mb={3}>
+        <Flex justify="space-between" align="start">
           <Stack gap={1}>
             <Text fontWeight="bold" fontSize="lg">
               {transaction.company}
@@ -130,11 +130,10 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
           </Flex>
         </Flex>
 
-        <Text color={textColor} fontSize="sm" mb={3}>
-          {transaction.description}
-        </Text>
-
-        <Flex justify="space-between" align="center" mb={3}>
+        <Flex justify="space-between" align="center">
+          <Text color={textColor} fontSize="sm">
+            {transaction.description}
+          </Text>
           <Text color={textColor} fontSize="sm">
             {transaction.date
               ? format(transaction.date, 'MMM dd, yyyy')
